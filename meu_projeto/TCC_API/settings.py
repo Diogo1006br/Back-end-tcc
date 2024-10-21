@@ -3,10 +3,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Carregar as variáveis de ambiente
+
 load_dotenv()
 
-# Configuração básica
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 SITE_URL = 'http://localhost:8000'
@@ -31,11 +31,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'Projects',        # Seu app de Projetos
-    'Counts',          # Certifique-se que a pasta correta do app é "Counts"
+    'Projects',       
+    'Accounts',         
     'corsheaders',
-    'Registro',        # App de registros
-    'Formularios',     # Seu app de formulários
+    'Registrations',       
+    'Forms',    
 ]
 
 # Middleware
@@ -82,6 +82,7 @@ USE_TZ = True
 
 # Modelo de usuário customizado
 AUTH_USER_MODEL = 'Accounts.CustomUser_DBTable'
+
 
 # Configurações do DRF
 REST_FRAMEWORK = {
@@ -132,3 +133,20 @@ SERVER_EMAIL = os.getenv('SERVER_EMAIL')
 
 # Tipo de campo primário padrão
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
