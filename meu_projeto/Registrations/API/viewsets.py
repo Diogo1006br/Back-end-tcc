@@ -219,7 +219,7 @@ class ActionViewSet(viewsets.ModelViewSet):
                 'Inviter': request.user.email,
                 'title': title,
             }
-            self.send_html_email([user_email], 'Invite Aria-IO', 'Invite.html', context, settings.EMAIL_HOST_USER)
+            self.send_html_email([user_email], 'Invite IF', 'Invite.html', context, settings.EMAIL_HOST_USER)
 
             action = Action_DBTable.objects.create(
                 title=title,

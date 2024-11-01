@@ -21,11 +21,23 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 
-
+# Create your views here.
 
 
 class IsAutenticatedView(APIView):
- 
+    """
+    View class for checking if a user is authenticated.
+
+    Attributes
+    ----------
+    **APIView : rest_framework.views.APIView**
+        Base class for all views in the REST API.
+
+    Methods
+    -------
+    **get(request: rest_framework.request.Request) -> rest_framework.response.Response**
+        Method to check if a user is authenticated. Returns an HTTP response with a message indicating whether the user is authenticated or not.
+    """
 
     def get(self, request):
         user = request.user
@@ -35,16 +47,25 @@ class IsAutenticatedView(APIView):
             return Response({'message': 'Usuário não está autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class CurrentUserView(APIView):
-  
+    """
+    View to return information about the currently logged in user.
+    """
     def get(self, request):
-     
+        """
+        Retorna o usuário atualmente logado.
+
+        :param request: A solicitação HTTP.
+        :type request: Request
+        :return: O usuário atualmente logado.
+        :rtype: Response
+        """
         user = request.user
         
         return Response({
             "username": user.username,
             "email": user.email,
             "company":user.companyId
-
+            # inclua quaisquer outros campos que você deseja retornar aqui
         })
     
 

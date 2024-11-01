@@ -1,88 +1,118 @@
-from rest_framework import serializers
-from Accounts.models import CustomUser_DBTable, Company_DBTable, Plans_DBTable
+from rest_framework import serializers, exceptions
+from Accounts.models import CustomUser_DBTable
+from Accounts.models import Company_DBTable
+from Accounts.models import Plans_DBTable
 from django.contrib.auth import authenticate
-from datetime import datetime
+import datetime
+# from .models import Account
 
-class PasswordSerializer(serializers.Serializer):
-    password = serializers.CharField(required=True)
+class passwordSerializer(serializers.Serializer):
+
+    password = serializers.CharField(required=True, allow_blank=False)
 
     class Meta:
         model = CustomUser_DBTable
         fields = ['password']
-
 class UserSerializer(serializers.ModelSerializer):
     """
-    Serializador para o modelo de Usuário (CustomUser_DBTable).
+    Serializer for the CustomUser_DBTable model.
+
+    Fields:
+        email (CharField): The email field of the user.
+        password (CharField): The password field of the user.
     """
     class Meta:
         model = CustomUser_DBTable
         fields = '__all__'
-
 class UserSerializerNoPassword(serializers.ModelSerializer):
     """
-    Serializador de usuário sem incluir o campo de senha.
+    Serializer for the CustomUser_DBTable model.
     """
-    email = serializers.EmailField(required=True)
-    firstName = serializers.CharField(required=True)
-    lastName = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True, allow_blank=False)
+    firstName = serializers.CharField(required=True, allow_blank=False)
+    lastName = serializers.CharField(required=True, allow_blank=False)
     birthDate = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d',])
-    CPF = serializers.CharField(required=True)
-    phone = serializers.CharField(required=True)
-    companyPosition = serializers.CharField(required=True)
+    CPF = serializers.CharField(required=True, allow_blank=False)
+    phone = serializers.CharField(required=True, allow_blank=False)
+    companyPosition = serializers.CharField(required=True, allow_blank=False)
     profileImage = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser_DBTable
-        fields = ['email', 'firstName', 'lastName', 'birthDate', 'CPF', 'phone', 'companyPosition', 'profileImage']
+        fields = ['email', 'firstName', 'lastName', 'birthDate','CPF','phone','companyPosition','profileImage']
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, data):
-        username = data.get("email")
-        password = data.get("password")
+        username = data.get("email", "")
+        password = data.get("password", "")
 
         if username and password:
             user = authenticate(request=self.context.get('request'), username=username, password=password)
             if user:
-                if not user.is_active:
-                    raise serializers.ValidationError("Usuário desativado.")
-                data["user"] = user
+                if user.is_active:
+                    data["user"] = user
+                else:
+                    msg = "Usuário está desativado."
+                    raise exceptions.ValidationError(msg)
             else:
-                raise serializers.ValidationError("Credenciais inválidas.")
+                msg = "Não foi possível fazer login com as credenciais fornecidas."
+                raise exceptions.ValidationError(msg)
         else:
-            raise serializers.ValidationError("Email e senha são obrigatórios.")
+            msg = "Deve fornecer nome de usuário e senha."
+            raise exceptions.ValidationError(msg)
         return data
+
+from datetime import datetime
 
 class CompanySerializer(serializers.ModelSerializer):
     """
-    Serializador para o modelo de Empresa (Company_DBTable).
+    Serializer for the Company_DBTable model.
+
+    Fields:
+        All fields of the Company_DBTable model are included.
     """
-    user_Data = serializers.SerializerMethodField()
-    user_email = serializers.SerializerMethodField()
+    user_Data = serializers.SerializerMethodField('get_user_Data')
+    user_email = serializers.SerializerMethodField('get_user_email')
 
     class Meta:
         model = Company_DBTable
         fields = '__all__'
 
     def get_user_Data(self, obj):
-        # Pega os dados dos usuários associados à empresa
-        return [
-            {
-                'email': user['email'],
-                'registrationDate': user['registrationDate'].strftime('%Y-%m-%d'),
-                'lastConnection': user['lastConnection'].strftime('%Y-%m-%d')
-            } 
-            for user in obj.users.all().values('email', 'registrationDate', 'lastConnection')
-        ]
+        # Iterar sobre os objetos relacionados usando .all()
+        userlist = []
+        for user in obj.users.all().values('email', 'registrationDate', 'lastConnection'):
+            registration_date = user['registrationDate']
+            last_connection = user['lastConnection']
 
+            # Converter os campos de data para string
+            registration_date_str = registration_date.strftime('%Y-%m-%d') if isinstance(registration_date, datetime) else registration_date
+            last_connection_str = last_connection.strftime('%Y-%m-%d') if isinstance(last_connection, datetime) else last_connection
+
+            userdict = {
+                'email': user['email'],
+                'registrationDate': registration_date_str,
+                'lastConnection': last_connection_str
+            }
+            userlist.append(userdict)
+
+        return userlist
+    
     def get_user_email(self, obj):
-        return [user.email for user in obj.users.all()]
+        user_email = [user.email for user in obj.users.all()]
+        return user_email
+    
+    
 
 class PlanSerializer(serializers.ModelSerializer):
     """
-    Serializador para o modelo de Plano (Plans_DBTable).
+    Serializer for the Plans_DBTable model.
+
+    Fields:
+        All fields of the Plans_DBTable model are included.
     """
     class Meta:
         model = Plans_DBTable
