@@ -6,25 +6,37 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.utils.decorators import method_decorator
 from Utils.Mixins import Grupo_de_acesso_1Mixin, Grupo_de_acesso_3Mixin, Grupo_de_acesso_2Mixin
+from rest_framework.renderers import JSONRenderer
+
+
+
 
 class ProjectNumberView(Grupo_de_acesso_1Mixin, APIView):
+    renderer_classes = [JSONRenderer]
+
     def get(self, request):
+        # Verificação de permissão
         if not self.test_func():
             return self.handle_no_permission()
         
+        # Lógica para contar os projetos
         project_count = Project_DBTable.objects.filter(members=request.user.id).count()
         return Response({'project_numbers': project_count})
 
+
 class RecentProjectsView(Grupo_de_acesso_1Mixin, APIView):
+    renderer_classes = [JSONRenderer]
+
     def get(self, request):
+        # Verificação de permissão
         if not self.test_func():
             return self.handle_no_permission()
         
-        max_last_projects = 5
-        queryset = Project_DBTable.objects.filter(members=request.user).order_by('-updated_at')[:max_last_projects]
-        serializer = ProjectSerializer(queryset, many=True)
-        return Response(serializer.data)
-
+        # Lógica para recuperar projetos recentes
+        recent_projects = Project_DBTable.objects.filter(members=request.user.id).order_by('-created_at')[:5]
+        project_data = [{'id': project.id, 'name': project.name} for project in recent_projects]
+        return Response({'recent_projects': project_data})
+    
 class ChangeProjectStatus(Grupo_de_acesso_2Mixin, APIView):
     def post(self, request, *args, **kwargs):
         if not self.test_func():

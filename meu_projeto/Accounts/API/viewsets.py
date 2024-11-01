@@ -1,7 +1,6 @@
 from rest_framework import viewsets
 from Accounts.API import serializers
 from Accounts.models import Company_DBTable, CustomUser_DBTable
-from .serializers import  UserSerializerNoPassword
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.decorators import login_required
@@ -11,7 +10,7 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from Utils.Mixins import Grupo_de_acesso_3Mixin  # Import the mixin
 
-class passwordViewSet(viewsets.ViewSet):
+class PasswordViewSet(viewsets.ViewSet):
     """
     View class for password data.
     """
@@ -28,7 +27,6 @@ class passwordViewSet(viewsets.ViewSet):
             rest_framework.response.Response: The updated user data.
 
         """
-
         user = request.user
         serializer = serializers.passwordSerializer(user, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
@@ -37,6 +35,8 @@ class passwordViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class CompanyViewSet(viewsets.ModelViewSet):
     """
     View class for company data.
@@ -47,10 +47,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.CompanySerializer
     queryset = Company_DBTable.objects.all()
-    
-    ...
-    
-    
+
     @method_decorator(login_required)
     def list(self, request):
         """
@@ -66,6 +63,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         company = request.user.companyId
         serializer = serializers.CompanySerializer(company)
         return Response(serializer.data)
+
     @method_decorator(login_required)
     def update(self, request, pk=None):
         """
@@ -82,11 +80,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
         mixin = Grupo_de_acesso_3Mixin()
         if not mixin.test_func(request):
             return mixin.handle_no_permission()
-        data = request.data.copy()  # Criar uma cópia mutável dos dados
+        
+        data = request.data.copy()  # Create a mutable copy of the data
         files = request.FILES
         data['logotipo'] = files.get('logotipo', None)
         image = data.get('image', None)
-        if image is None or image == '' or image == 'undefined' or image == 'null':
+        
+        if not image or image in ['undefined', 'null']:
             if settings.DEBUG:
                 image = '/projects_images/default.jpg'
             else:
@@ -100,7 +100,6 @@ class CompanyViewSet(viewsets.ModelViewSet):
         members_data = data.getlist('user_email[]')
         valid_Members = []
         for email in members_data:
-            print(f'Email: {email}')  # Imprimir o email
             try:
                 user = get_user_model().objects.get(email=email)
                 valid_Members.append(user)
@@ -116,13 +115,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
             'site': data['site'],
         }
         
-        # Atualizar a empresa
+        # Update the company
         Company_DBTable.objects.filter(id=instance.id).update(**newData)
         
-        # Buscar a empresa atualizada
+        # Fetch updated company
         company = Company_DBTable.objects.get(id=instance.id)
         
-        # Atribuir os membros à empresa
+        # Set company members
         company.users.set(valid_Members)
         company.logotipo = image
         
@@ -131,7 +130,6 @@ class CompanyViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Empresa atualizada com sucesso'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'message': 'Erro ao atualizar a empresa'}, status=status.HTTP_400_BAD_REQUEST)
-    
         
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -144,6 +142,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.UserSerializer
     queryset = CustomUser_DBTable.objects.all()
+
     @method_decorator(login_required)
     def create(self, request, *args, **kwargs):
         """
@@ -160,19 +159,17 @@ class UserViewSet(viewsets.ModelViewSet):
         Raises:
             HTTP_401_UNAUTHORIZED: If the user is not part of the 'Gestor da empresa' or 'Admins' groups.
         """
-
         userGroup = request.user.groups.all()[0].name
 
         if 'Gestor da empresa' in userGroup or 'Admins' in userGroup:
             if 'is_staff' in request.data:
-                if request.data['is_staff'] == 'true':
-                    request.data['is_staff'] = False
-                if request.data['is_superuser'] == 'true':
-                    request.data['is_superuser'] = False
+                request.data['is_staff'] = False
+                request.data['is_superuser'] = False
                 
             return super().create(request, *args, **kwargs)
         else:
             return Response({'message': 'Você não tem permissão para criar um novo usuário'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class ReturnLogedUser(viewsets.ViewSet):
     """
@@ -191,19 +188,18 @@ class ReturnLogedUser(viewsets.ViewSet):
 
         """
         user = request.user
-        user_dict ={   "id": user.id,
-                        "email": user.email,
-                        "company":user.companyId.companyName,
-                        "firstName": user.firstName,
-                        "lastName": user.lastName,
-                        "companyPosition": user.companyPosition,
-                        "CPF": user.CPF,
-                        "phone": user.phone,
-                        "birthDate": user.birthDate,
-                        "profileImage": '',
-
-                    # inclua quaisquer outros campos que você deseja retornar aqui
-                    }
+        user_dict = {
+            "id": user.id,
+            "email": user.email,
+            "company": user.companyId.companyName,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
+            "companyPosition": user.companyPosition,
+            "CPF": user.CPF,
+            "phone": user.phone,
+            "birthDate": user.birthDate,
+            "profileImage": '',
+        }
         
         if user.profileImage:
             user_dict['profileImage'] = user.profileImage.url
@@ -223,14 +219,10 @@ class ReturnLogedUser(viewsets.ViewSet):
             rest_framework.response.Response: The updated user data.
 
         """
-
         user = request.user
-        serializer = serializers.UserSerializerNoPassword(user, data=request.data, partial=True)
+        serializer = UserSerializerNoPassword(user, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    
-    
