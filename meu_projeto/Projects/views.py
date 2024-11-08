@@ -23,7 +23,7 @@ class RecentProjectsView(Grupo_de_acesso_1Mixin, APIView):
     def get(self, request):
         # Lógica para recuperar projetos recentes
         recent_projects = Project_DBTable.objects.filter(members=request.user.id).order_by('-created_at')[:5]
-        project_data = [{'id': project.id, 'name': project.name} for project in recent_projects]
+        project_data = [{'id': project.id, 'name': project.projectName} for project in recent_projects]
         return Response({'recent_projects': project_data})
 
 
