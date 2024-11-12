@@ -1,8 +1,15 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Q
-from .serializers import AssetDBTableSerializer, SubItemDBTableSerializer, AssetSubElementSerializer, imagesSerializer, ActionDBTableSerializer, CommentSerializer, AssetDBTableSerializerwithformname
-from Registrations.models import Asset_DBTable, SubItem_DBTable, Asset_Sub_Element_DBTable, images, Action_DBTable, Comment_DBTable
+from .serializers import (
+    AssetDBTableSerializer, SubItemDBTableSerializer, AssetSubElementSerializer, 
+    imagesSerializer, ActionDBTableSerializer, CommentSerializer, 
+    AssetDBTableSerializerwithformname
+)
+from Registrations.models import (
+    Asset_DBTable, SubItem_DBTable, Asset_Sub_Element_DBTable, images, 
+    Action_DBTable, Comment_DBTable
+)
 from django.contrib.contenttypes.models import ContentType
 from Projects.models import Project_DBTable
 from django.core.mail import EmailMessage
@@ -19,9 +26,9 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_2Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         comment = request.data.get('comment')
         content_type = request.data.get('content_type')
         if content_type == 'Asset':
@@ -36,23 +43,26 @@ class CommentViewSet(viewsets.ModelViewSet):
         object_id = request.data.get('object_id')
         user = request.user
         questionKey = request.data.get('questionKey')
-        obj, create = Comment_DBTable.objects.update_or_create(comment=comment, content_type=content_type, object_id=object_id, user=user, questionKey=questionKey)
+        obj, created = Comment_DBTable.objects.update_or_create(
+            comment=comment, content_type=content_type, object_id=object_id, 
+            user=user, questionKey=questionKey
+        )
         return Response({'status': 'Comment created successfully'}, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_1Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         params = request.query_params
         if 'content_type' and 'object_id' in params:
             contentType = params.get('content_type')
             object_id = params.get('object_id')
             if contentType == 'Asset':
                 contentType = ContentType.objects.get_for_model(Asset_DBTable)
-            if contentType == 'Element':
+            elif contentType == 'Element':
                 contentType = ContentType.objects.get_for_model(SubItem_DBTable)
-            if contentType == 'SubElement':
+            elif contentType == 'SubElement':
                 contentType = ContentType.objects.get_for_model(Asset_Sub_Element_DBTable)
             queryset = self.get_queryset().filter(content_type=contentType, object_id=object_id)
             serializer = self.get_serializer(queryset, many=True)
@@ -62,12 +72,10 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class ActionViewSet(viewsets.ModelViewSet):
     def send_html_email(self, to_list, subject, template_name, context, from_email=None):
-        print('CHEGUEI NA FUNÇÃO....')
         html_content = render_to_string(template_name, context)
         email = EmailMessage(subject, html_content, from_email, to_list)
         email.content_subtype = "html"
         email.send()
-        print('EMAIL ENVIADO....')
 
     queryset = Action_DBTable.objects.all()
     serializer_class = ActionDBTableSerializer
@@ -75,9 +83,9 @@ class ActionViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_2Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         request_user = request.user
         queryset = super().get_queryset().filter(Q(responsible=request_user) | Q(user_hasCreated=request_user))
         serializer = self.get_serializer(queryset, many=True)
@@ -86,9 +94,9 @@ class ActionViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def create(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_2Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         title = request.data.get('title')
         content_type = request.data.get('content_type')
         if content_type == 'Asset':
@@ -104,11 +112,7 @@ class ActionViewSet(viewsets.ModelViewSet):
         priority = request.data.get('priority')
         deadline = request.data.get('deadline')
         user_email = request.data.get('responsible_email')
-
-        if request.data.get('questionKey'):
-            questionKey = request.data.get('questionKey')
-        else:
-            questionKey = ''
+        questionKey = request.data.get('questionKey', '')
 
         if not user_email:
             return Response({'status': 'Error creating action', 'error': 'User email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -152,11 +156,10 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_1Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         params = request.query_params
-
         if 'project' in params:
             projeto = params.get('project')
             OBJproject = Project_DBTable.objects.filter(pk=projeto).first()
@@ -176,9 +179,9 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def create(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_2Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         data = request.data
         try:
             serializer = self.get_serializer(data=data)
@@ -186,14 +189,14 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
             serializer.save()
         except Exception as e:
             return Response({'status': 'Asset not created', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)    
-        return Response({'status': 'Asset created successfully'},)
+        return Response({'status': 'Asset created successfully'})
 
     @method_decorator(login_required)
     def destroy(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_3Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return Response(status=status.HTTP_403_FORBIDDEN)
+        
         instance = self.get_object()
         subItems = SubItem_DBTable.objects.filter(ativo=instance.id)
         try:
@@ -211,12 +214,12 @@ class SubItemDBTableViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_1Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         user = request.user
         projetos = Project_DBTable.objects.filter(members=user)
-        assets =  Asset_DBTable.objects.filter(project__in=projetos)
+        assets = Asset_DBTable.objects.filter(project__in=projetos)
         queryset = self.get_queryset().filter(asset__in=assets)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -228,20 +231,31 @@ class SubItemperAssetViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_1Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         params = request.query_params
         company = request.user.companyId
-        if 'Asset' in params:
-            asset = params.get('Asset')
+        asset = params.get('Asset')
+
+        # Verificação se o valor do Asset é um número válido
+        if asset and asset.isdigit():
+            asset = int(asset)
             OBJasset = Asset_DBTable.objects.filter(pk=asset).first()
-            if OBJasset.project.owner == company:
+            if OBJasset and OBJasset.project.owner == company:
                 queryset = self.get_queryset().filter(asset=asset)
                 serializer = self.get_serializer(queryset, many=True)
                 return Response(serializer.data)
             else:
-                return Response({'message': 'Você não tem permissão para acessar esse ativo'}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response(
+                    {'message': 'Você não tem permissão para acessar esse ativo.'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        else:
+            return Response(
+                {'message': 'Parâmetro Asset inválido. Deve ser um número inteiro representando o ID do ativo.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class AssetSubElementViewSet(viewsets.ModelViewSet):
     queryset = Asset_Sub_Element_DBTable.objects.all()
@@ -254,9 +268,9 @@ class imagesViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_1Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         params = request.query_params
         if 'questionkey' in params:
             key = params.get('questionkey')
@@ -265,9 +279,9 @@ class imagesViewSet(viewsets.ModelViewSet):
 
             if contentType == 'Asset':
                 contentType = ContentType.objects.get_for_model(Asset_DBTable)
-            if contentType == 'Element':
+            elif contentType == 'Element':
                 contentType = ContentType.objects.get_for_model(SubItem_DBTable)
-            if contentType == 'SubElement':
+            elif contentType == 'SubElement':
                 contentType = ContentType.objects.get_for_model(Asset_Sub_Element_DBTable)
             queryset = self.get_queryset().filter(questionKey=key, content_type=contentType, object_id=object_id)
             serializer = self.get_serializer(queryset, many=True)
@@ -278,19 +292,23 @@ class imagesViewSet(viewsets.ModelViewSet):
     @method_decorator(login_required)
     def create(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_2Mixin()
-        mixin.request = request
-        if not mixin.test_func():
+        if not mixin.test_func(request):
             return mixin.handle_no_permission()
+        
         questionKey = request.data.get('questionKey')
         content_type = request.data.get('response_type')
         if content_type == 'Asset':
             content_type = ContentType.objects.get_for_model(Asset_DBTable)
-        if content_type == 'Element':
+        elif content_type == 'Element':
             content_type = ContentType.objects.get_for_model(SubItem_DBTable)
-        if content_type == 'SubElement':
+        elif content_type == 'SubElement':
             content_type = ContentType.objects.get_for_model(Asset_Sub_Element_DBTable)
+        
         object_id = request.data.get('object_id')
         image = request.data.get('image')
         description = request.data.get('description')
-        obj , create = images.objects.update_or_create(questionKey=questionKey, content_type=content_type, object_id=object_id, defaults={'image': image, 'description': description, 'questionKey': questionKey, 'content_type': content_type, 'object_id': object_id})
+        obj, created = images.objects.update_or_create(
+            questionKey=questionKey, content_type=content_type, object_id=object_id, 
+            defaults={'image': image, 'description': description, 'questionKey': questionKey, 'content_type': content_type, 'object_id': object_id}
+        )
         return Response({'status': 'Image created successfully'}, status=status.HTTP_201_CREATED)
