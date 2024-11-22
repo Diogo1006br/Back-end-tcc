@@ -61,7 +61,7 @@ class AssetDBTableSerializerwithformname(serializers.ModelSerializer):
 
     class Meta:
         model = Asset_DBTable
-        fields = ['id','assetName', 'form', 'form_name', 'project','status']
+        fields = ['id','assetName', 'form', 'form_name', 'project','status','show_to']
 
     def get_form_name(self, obj):
         return obj.form.name
@@ -70,7 +70,7 @@ class AssetDBTableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Asset_DBTable
-        fields = ['id','assetName', 'form', 'form_name', 'project','status']
+        fields = ['id','assetName', 'form', 'form_name', 'project','status', 'is_ocult', 'show_to'] # adicionar show_to quando fizer o inputtag no frontend
 
     def get_form_name(self, obj):
         return obj.form.name

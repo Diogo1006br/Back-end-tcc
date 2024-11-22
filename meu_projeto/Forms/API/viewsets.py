@@ -105,9 +105,11 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
             return mixin.handle_no_permission()
         
         data = request.data
-        for key in data['response']:
-            if 'https' in data['response'][key]:
-                image_url = data['response'][key]
+
+        # Iterar sobre os campos da resposta e tratar os valores adequadamente
+        for key, value in data['response'].items():
+            if isinstance(value, str) and 'https' in value:  # Verifica se é uma string e contém 'https'
+                image_url = value
                 response = requests.get(image_url)
                 if response.status_code == 200:
                     if settings.DEBUG:
@@ -120,7 +122,14 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
                         file_content = ContentFile(response.content)
                         file_path = default_storage.save(file_name, file_content)
                         data['response'][key] = default_storage.url(file_path)
-                
+            elif isinstance(value, bool):
+                # Tratamento específico para valores booleanos (se necessário)
+                print(f"Campo {key} é um valor booleano: {value}")
+            else:
+                # Ignorar outros tipos de valores, ou adicionar tratamento adicional
+                print(f"Campo {key} possui um tipo ignorado: {value}")
+
+        # Montar os dados para criar ou atualizar a resposta
         Newdata = {
             'formID': data['formID'],
             'response': data['response'],
@@ -128,6 +137,7 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
             'content_type': ''
         }
         
+        # Determinar o tipo de conteúdo com base no tipo de resposta
         if data['response_type'] == 'Asset':
             Newdata['content_type'] = ContentType.objects.get_for_model(Asset_DBTable)
         elif data['response_type'] == 'Element':
@@ -135,15 +145,18 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
         elif data['response_type'] == 'SubElement':
             Newdata['content_type'] = ContentType.objects.get_for_model(Asset_Sub_Element_DBTable)
 
+        # Criar ou atualizar a instância no banco de dados
         instance, created = self.get_queryset().update_or_create(
             object_id=Newdata['object_id'],
             content_type=Newdata['content_type'],
             defaults={'formID': Form.objects.get(id=Newdata['formID']), 'response': Newdata['response']}
         )
 
+        # Determinar o código de status apropriado
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status_code)
+
 
     @method_decorator(login_required)
     def list(self, request, *args, **kwargs):

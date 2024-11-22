@@ -10,12 +10,15 @@ class Asset_DBTable(models.Model):
 
     assetName = models.CharField('Nome do ativo', max_length=100)
     form = models.ForeignKey('Forms.Form', on_delete= models.CASCADE)
+    is_ocult = models.BooleanField(("Ocultar"),default=False)
+    show_to = models.ManyToManyField('Accounts.CustomUser_DBTable',verbose_name='Mostrar para',blank=True)
     project = models.ForeignKey('Projects.Project_DBTable',on_delete=models.CASCADE, null=True)
     options = (
         ('Ativo','Ativo'),
         ('Arquivado','Arquivado'),
     )
     status = models.CharField('Status',max_length=100,choices=options,default='Ativo')
+    reviewer = models.ForeignKey('Accounts.CustomUser_DBTable', on_delete=models.CASCADE, null=True, related_name='reviewer')
     def __str__(self):
 
             return self.assetName
@@ -23,6 +26,8 @@ class SubItem_DBTable(models.Model):
     elementName = models.CharField('nome do elemento',max_length=100)
     asset = models.ForeignKey('Asset_DBTable',on_delete=models.CASCADE)
     form = models.ForeignKey('Forms.Form', on_delete=models.CASCADE)
+    is_ocult = models.BooleanField('Ocultar',default=False)
+    show_to = models.ManyToManyField('Accounts.CustomUser_DBTable',verbose_name='Mostrar para',blank=True)
     def __str__(self):
         return self.elementName
 class Asset_Sub_Element_DBTable(models.Model):
