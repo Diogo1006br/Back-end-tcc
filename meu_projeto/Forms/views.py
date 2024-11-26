@@ -1,140 +1,115 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from .models import Form, FormResponse
-from Registrations.models import Asset_DBTable 
+from Registrations.models import Asset_DBTable
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
 from rest_framework import status
 from django.utils.decorators import method_decorator
-from Utils.Mixins import Grupo_de_acesso_3Mixin,Grupo_de_acesso_1Mixin,Grupo_de_acesso_2Mixin
-  # Import the mixin
+from Utils.Mixins import Grupo_de_acesso_3Mixin, Grupo_de_acesso_1Mixin, Grupo_de_acesso_2Mixin
 
-# Create your views here.
 
 class FormNumberView(APIView):
     @method_decorator(login_required)
     def get(self, request):
         """
-        Retrieves the number of forms in system
+        Retrieves the number of forms in the system.
 
         :param request: HTTP request object.
-        :type request: rest_framework.request.Request
-        :return: HTTP response with the number of forms in system.
-        :rtype: rest_framework.response.Response
-
-        :Request: GET api url/form_numbers/
+        :return: HTTP response with the number of forms in the system.
         """
         mixin = Grupo_de_acesso_1Mixin()
         if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        return Response({'form_numbers': Form.objects.filter(company=request.user.companyId.id).count()})
-    
+            return Response(
+                {'message': 'Você não tem permissão para acessar essa página.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        form_count = Form.objects.filter(company=request.user.companyId.id).count()
+        return Response({'form_numbers': form_count})
+
+
 class ChangeFormStatus(APIView):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         """
-        Changes the status of a form
+        Changes the status of a form.
 
         :param request: HTTP request object.
-        :type request: rest_framework.request.Request
-        :param args: Additional arguments.
-        :type args: tuple
-        :param kwargs: Additional keyword arguments.
-        :type kwargs: dict
-        :return: HTTP response with the new status of the form.
-        :rtype: rest_framework.response.Response
-
-        :Request: POST api url/change_form_status/<int:id>/
-        :Post data: {'status': 'new_status'}
-        
+        :param kwargs: URL parameters, including form ID.
+        :return: HTTP response with the updated status of the form.
         """
         mixin = Grupo_de_acesso_2Mixin()
         if not mixin.test_func(request):
             return Response(status=status.HTTP_403_FORBIDDEN)
+
         form_id = kwargs.get('id')
         form = Form.objects.get(id=form_id)
-        formcompany = form.company.id
-        if formcompany != request.user.companyId.id:
-            return Response({'message': 'Você não tem permissão para alterar o status deste formulário'})
-        else:
-            status = request.data.get('status')
-            form.status = status
-            form.save()
-            return Response({'status': form.status})
-    
+        if form.company.id != request.user.companyId.id:
+            return Response({'message': 'Você não tem permissão para alterar o status deste formulário.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        form.status = request.data.get('status')
+        form.save()
+        return Response({'status': form.status})
+
 
 class ResponsesByProject(APIView):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         """
-        Retrieves the number of responses by project
+        Retrieves the responses associated with a project.
 
         :param request: HTTP request object.
-        :type request: rest_framework.request.Request
-        :param args: Additional arguments.
-        :type args: tuple
-        :param kwargs: Additional keyword arguments.
-        :type kwargs: dict
-        :return: HTTP response with the number of responses by project.
-        :rtype: rest_framework.response.Response
-
-        :Request: GET api url/responses_by_project/
+        :param kwargs: URL parameters, including project and form IDs.
+        :return: HTTP response with the list of responses.
         """
         mixin = Grupo_de_acesso_1Mixin()
         if not mixin.test_func(request):
             return Response(status=status.HTTP_403_FORBIDDEN)
+
         project = kwargs.get('project')
+        form_id = kwargs.get('form')
         assets = Asset_DBTable.objects.filter(project=project)
-        form = kwargs.get('form')
-        responses = FormResponse.objects.filter(form_id=form, object_id__in=assets.values_list('id', flat=True))
+        responses = FormResponse.objects.filter(formID=form_id, object_id__in=assets.values_list('id', flat=True))
 
-        DataReturn = []
+        if not responses:
+            return Response({'message': 'Nenhuma resposta encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
         company = request.user.companyId.id
+        data_return = []
         for response in responses:
-
             if response.formID.company.id != company:
-                return Response({'message': 'Você não tem permissão para acessar esses dados'})
-            else:
-                DataReturn.append({"response": response.response})
+                return Response({'message': 'Você não tem permissão para acessar esses dados.'},
+                                status=status.HTTP_403_FORBIDDEN)
+            data_return.append({"response": response.response})
 
-        return Response(DataReturn)
-    
+        return Response(data_return)
+
+
 class DuplicateForm(APIView):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         """
-        Duplicates a form
+        Duplicates a form.
 
         :param request: HTTP request object.
-        :type request: rest_framework.request.Request
-        :param args: Additional arguments.
-        :type args: tuple
-        :param kwargs: Additional keyword arguments.
-        :type kwargs: dict
-        :return: HTTP response with the duplicated form.
-        :rtype: rest_framework.response.Response
-
-        :Request: POST api url/duplicate_form/<int:id>/
+        :param kwargs: URL parameters, including form ID.
+        :return: HTTP response with the ID of the duplicated form.
         """
         mixin = Grupo_de_acesso_2Mixin()
         if not mixin.test_func(request):
             return Response(status=status.HTTP_403_FORBIDDEN)
+
         form_id = kwargs.get('id')
         form = Form.objects.get(id=form_id)
-        formcompany = form.company.id
-        if formcompany != request.user.companyId.id:
-            return Response({'message': 'Você não tem permissão para duplicar este formulário'})
-        else:
-            new_form = Form.objects.create(
-                name=form.name,
-                form=form.form,
-                company=form.company,
-                status=form.status,
-            )
-            return Response({'form': new_form.id})
-            
-        
+        if form.company.id != request.user.companyId.id:
+            return Response({'message': 'Você não tem permissão para duplicar este formulário.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
-
-        
-        
+        new_form = Form.objects.create(
+            name=f'{form.name} (Cópia)',
+            form=form.form,
+            company=form.company,
+            status=form.status,
+        )
+        return Response({'form': new_form.id}, status=status.HTTP_201_CREATED)
