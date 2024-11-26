@@ -72,4 +72,5 @@ urlpatterns = [
     path('change_form_status/<int:id>/', ChangeFormStatus.as_view(), name='change_form_status'),
     path('change_project_status/<int:id>/', ChangeProjectStatus.as_view(), name='change_project_status'),
     path('responses_by_project/<int:project>/<int:form>/', ResponsesByProject.as_view(), name='responses_by_project'),
+    
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # Para servir arquivos de mídia
