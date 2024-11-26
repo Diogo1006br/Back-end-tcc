@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
+    'rest_framework_simplejwt',  # Para usar JWT
     'Projects',
     'Accounts',
     'corsheaders',
@@ -148,7 +148,7 @@ AUTH_USER_MODEL = 'Accounts.CustomUser_DBTable'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication', 
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -202,8 +202,8 @@ CSRF_COOKIE_SECURE = True
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # tempo de vida do token de acesso
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # tempo de vida do token de atualização
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')

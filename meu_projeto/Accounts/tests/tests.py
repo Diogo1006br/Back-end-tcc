@@ -1,76 +1,63 @@
-
 from django.test import TestCase
-from django.urls import reverse
-from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
-from Accounts.models import Company_DBTable
-from rest_framework_simplejwt.tokens import RefreshToken
+from Accounts.models import Company_DBTable, CustomUser_DBTable
 
-class LoginViewTest(TestCase):
-    """
-    Test case for the login view.
 
-    This class contains unit tests for the login view. It inherits from Django's TestCase.
-
-    :param TestCase: Base class for creating unit tests.
-    :type TestCase: django.test.TestCase
-
-    Methods
-    -------
-    setUp(self)
-        Sets up the test environment before each test method is run.
-
-    test_authenticate_valid_user(self)
-        Tests the login view with valid user credentials.
-
-    test_authenticate_invalid_user(self)
-        Tests the login view with invalid user credentials.
-
-    test_authenticate_no_credentials(self)
-        Tests the login view without any credentials.
-    """
-
+class UserModelTest(TestCase):
+    
     def setUp(self):
-        """
-        Sets up the test environment before each test method is run.
+        # Criação de uma empresa para associar ao usuário
+        self.company = Company_DBTable.objects.create(
+            companyName="Test Company",
+            CNPJ="12.345.678/0001-90",
+            address="Rua Teste, 123",
+            city="Cidade Teste",
+            state="São Paulo"
+        )
+    
+    def test_create_user(self):
+        """Testa a criação de um usuário"""
+        user = CustomUser_DBTable.objects.create_user(
+            email="user@test.com",
+            password="testpassword123",
+            firstName="Test",
+            companyId=self.company.id  # Passando apenas o ID da empresa
+        )
 
-        This method creates a test client, a test company, a test user, and a test token.
-        """
-        self.client = APIClient()
-        self.company = Company_DBTable.objects.create(company_name='Test Company', CNPJ='12345678901234')
-        self.user = get_user_model().objects.create_user(email='test@test.com', password='testpassword', company_id=self.company.pk)
-        self.url = reverse('login')
-        self.token = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token.access_token}')
+        self.assertEqual(user.email, "user@test.com")
+        self.assertTrue(user.check_password("testpassword123"))
+        self.assertEqual(user.companyId.id, self.company.id)  # Verifica se o ID está correto
+        self.assertEqual(user.firstName, "Test")
 
-    def test_authenticate_valid_user(self):
-        """
-        Tests the login view with valid user credentials.
+    def test_create_superuser(self):
+        """Testa a criação de um superusuário"""
+        superuser = CustomUser_DBTable.objects.create_superuser(
+            email="superuser@test.com",
+            password="testpassword123",
+            firstName="Admin",
+            companyId=self.company.id  # Passando apenas o ID da empresa
+        )
 
-        This method sends a POST request to the login view with valid user credentials and checks the response.
-        """
-        response = self.client.post(self.url, {'email': 'test@test.com', 'password': 'testpassword'},format='json')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('refresh', response.data)
-        self.assertIn('access', response.data)
+        self.assertEqual(superuser.email, "superuser@test.com")
+        self.assertTrue(superuser.check_password("testpassword123"))
+        self.assertTrue(superuser.is_superuser)
+        self.assertTrue(superuser.is_staff)
 
-    def test_authenticate_invalid_user(self):
-        """
-        Tests the login view with invalid user credentials.
+    def test_create_user_without_company(self):
+        """Testa a criação de um usuário sem associar a empresa"""
+        with self.assertRaises(TypeError):
+            CustomUser_DBTable.objects.create_user(
+                email="no_company@test.com",
+                password="testpassword123",
+                firstName="Test"
+            )
 
-        This method sends a POST request to the login view with invalid user credentials and checks the response.
-        """
-        response = self.client.post(self.url, {'email': 'test@test.com', 'password': 'wrongpassword'},format='json')
-        self.assertEqual(response.status_code, 401)
-
-    def test_authenticate_no_credentials(self):
-        """
-        Tests the login view without any credentials.
-
-        This method sends a POST request to the login view without any credentials and checks the response.
-        """
-        response = self.client.post(self.url, {},format='json')
-        self.assertEqual(response.status_code, 400)
-        
-
-# Create your tests here.
+    def test_user_str_method(self):
+        """Testa o método __str__ do usuário"""
+        user = CustomUser_DBTable.objects.create_user(
+            email="user@test.com",
+            password="testpassword123",
+            firstName="Test",
+            companyId=self.company.id  # Passando o ID da empresa
+        )
+        self.assertEqual(str(user), "user@test.com")

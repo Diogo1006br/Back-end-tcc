@@ -1,257 +1,128 @@
-from rest_framework.test import APIClient, APITestCase
-from django.contrib.auth import get_user_model
-from Projects.models import Project_DBTable
-from Accounts.models import Company_DBTable
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.test import TestCase
+from Accounts.models import User, Company_DBTable  # Importando os modelos necessários
+from Projects.models import Project  # Assumindo que você tenha o modelo de Project
 
-
-User = get_user_model()
-class ProjectViewSetTestCase(APITestCase):
-    """
-    Test case for the Project view set.
-
-    This class contains unit tests for the Project view set. It inherits from Django Rest Framework's APITestCase.
-
-    :param APITestCase: Base class for creating API test cases.
-    :type APITestCase: rest_framework.test.APITestCase
-
-    Methods
-    -------
-    setUp(self)
-        Sets up the test environment before each test method is run.
-
-    test_list_projects(self)
-        Tests the list projects endpoint.
-
-    test_create_project(self)
-        Tests the create project endpoint.
-
-    test_update_project(self)
-        Tests the update project endpoint.
-
-    test_create_project_with_invalid_member(self)
-        Tests the create project endpoint with an invalid member.
-
-    test_update_project_with_invalid_member(self)
-        Tests the update project endpoint with an invalid member.
-
-    test_create_project_without_members(self)
-        Tests the create project endpoint without members.
-
-    test_update_project_without_members(self)
-        Tests the update project endpoint without members.
-
-    test_create_project_without_authentication(self)
-        Tests the create project endpoint without authentication.
-
-    test_update_project_without_authentication(self)
-        Tests the update project endpoint without authentication.
-
-    test_create_project_with_invalid_data(self)
-        Tests the create project endpoint with invalid data.
-
-    test_update_project_with_invalid_data(self)
-        Tests the update project endpoint with invalid data.
-
-    tearDown(self)
-        Cleans up the test environment after each test method has run.
-    """
+class ProjectViewSetTestCase(TestCase):
     def setUp(self):
-        """
-        Sets up the test environment before each test method is run.
+        # Criando uma instância de empresa de exemplo
+        self.company = Company_DBTable.objects.create(
+            name='Test Company'
+        )
 
-        This method creates a test client, a test company, a test user, a test project, and a test token.
-        """
-        # Implementation...
-        self.client = APIClient()
-        self.company = Company_DBTable.objects.create(company_name='Test Company', CNPJ='12345678901234')
-        self.user = User.objects.create(email='testuser@teste.com', password='testpass',company_id=self.company)
-        self.client.login(email='testuser@teste.com', password='testpass')
-        self.project = Project_DBTable.objects.create(project_name='Test Project', project_description='Test Description', owner=self.user.company_id)
-        self.token = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token.access_token}')
+        # Criando um usuário com o ID da empresa, não o objeto inteiro
+        self.user = User.objects.create_user(
+            email='testuser@teste.com', 
+            password='testpass', 
+            companyId=self.company.id  # Passando o ID da empresa
+        )
 
-    def test_list_projects(self):
-        """
-        Tests the list projects endpoint.
-
-        This method sends a GET request to the list projects endpoint and checks the response.
-        """
-        response = self.client.get('/projects/')
-        
-        self.assertEqual(response.status_code, 200)
+        # Criando um projeto associado à empresa (usando companyId)
+        self.project = Project.objects.create(
+            name="Test Project",
+            description="Project description",
+            company=self.company,  # Referência direta ao modelo Company_DBTable
+            owner=self.user
+        )
 
     def test_create_project(self):
         """
-        Tests the create project endpoint.
-
-        This method sends a POST request to the create project endpoint and checks the response.
+        Testa a criação de um novo projeto
         """
-        member= []
-
-        member.append(self.user.email)
-        data = {
-            "project_name": "New Project",
-            "project_description": "New Description",
-            "members": member,
-            "owner": self.user.company_id.pk
-        }
-        
-        response = self.client.post('/projects/', data=data, format='json')
-        
+        response = self.client.post('/create_project/', {
+            'name': 'New Project',
+            'description': 'Project description',
+            'companyId': self.company.id  # Passando o ID da empresa corretamente
+        })
         self.assertEqual(response.status_code, 201)
+        self.assertContains(response, 'Project created successfully')
 
-    def test_update_project(self):
+    def test_change_project_status(self):
         """
-        Tests the update project endpoint.
-
-        This method sends a PUT request to the update project endpoint and checks the response.
+        Testa a mudança de status de um projeto
         """
-        member= []
-
-        member.append(self.user.email)
-        data = {
-            "project_name": "Updated Project",
-            "project_description": "Updated Description",
-            "members": member,
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.put(f'/projects/{self.project.id}/', data=data, format='json')
-        
+        response = self.client.patch(f'/projects/{self.project.id}/change_status/', {
+            'new_status': 'completed'
+        })
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Status updated successfully')
 
-    def test_create_project_with_invalid_member(self):
+    def test_invalid_status_change(self):
         """
-        Tests the create project endpoint with an invalid member.
-
-        This method sends a POST request to the create project endpoint with an invalid memberand checks the response.
+        Testa tentativa de mudar para um status inválido
         """
-        data = {
-            "project_name": "New Project",
-            "project_description": "New Description",
-            "members": ["invalidemail@example.com"],
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.post('/projects/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 400)
-
-    def test_update_project_with_invalid_member(self):
-        """
-        Tests the update project endpoint with an invalid member.
-
-        This method sends a PUT request to the update project endpoint with an invalid memberand checks the response.
-        """
-        data = {
-            "project_name": "Updated Project",
-            "project_description": "Updated Description",
-            "members": ["invalidemail@example.com"],
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.put(f'/projects/{self.project.id}/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 400)
-
-    def test_create_project_without_members(self):
-        """
-        Tests the create project endpoint without members.
-
-        This method sends a POST request to the create project endpoint without members and checks the response.
-        """
-        data = {
-            "project_name": "New Project",
-            "project_description": "New Description",
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.post('/projects/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 400)
-
-    def test_update_project_without_members(self):
-        """
-        Tests the update project endpoint without members.
-
-        This method sends a PUT request to the update project endpoint without members and checks the response.
-        """
-        data = {
-            "project_name": "Updated Project",
-            "project_description": "Updated Description",
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.put(f'/projects/{self.project.id}/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 400)
-
-    def test_create_project_without_authentication(self):
-        """
-        Tests the create project endpoint without authentication.
-
-        This method sends a POST request to the create project endpoint without authentication and checks the response.
-        """
-        self.client.logout()
-        data = {
-            "project_name": "New Project",
-            "project_description": "New Description",
-            "members": [self.user.email],
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.post('/projects/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 401)
-
-    def test_update_project_without_authentication(self):
-        """
-        Tests the update project endpoint without authentication.
-
-        This method sends a PUT request to the update project endpoint without authentication and checks the response.
-        """
-        self.client.logout()
-        data = {
-            "project_name": "Updated Project",
-            "project_description": "Updated Description",
-            "members": [self.user.email],
-            "owner": self.user.company_id.pk
-        }
-        response = self.client.put(f'/projects/{self.project.id}/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 401)
+        response = self.client.patch(f'/projects/{self.project.id}/change_status/', {
+            'new_status': 'invalid_status'
+        })
+        self.assertEqual(response.status_code, 400)  # Bad Request
+        self.assertContains(response, 'Invalid status')
 
     def test_create_project_with_invalid_data(self):
         """
-        Tests the create project endpoint with invalid data.
-
-        This method sends a POST request to the create project endpoint with invalid data and checks the response.
+        Testa a criação de projeto com dados inválidos
         """
-        data = {
-            "project_name": "",
-            "project_description": "New Description",
-            "members": [self.user.email],
-            "owner": "invalid_owner_id"
-        }
-        response = self.client.post('/projects/', data=data, format='json')
-        
+        response = self.client.post('/create_project/', {
+            'name': '',  # Nome do projeto está faltando
+            'description': 'Description without name',
+            'companyId': self.company.id  # Passando o ID correto da empresa
+        })
+        self.assertEqual(response.status_code, 400)  # Espera um erro por dados inválidos
+        self.assertContains(response, 'This field is required')
+
+    def test_logout(self):
+        """
+        Testa o logout com token válido
+        """
+        # Autenticando o usuário
+        self.client.login(email='testuser@teste.com', password='testpass')
+        response = self.client.post('/logout/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'logged out')
+
+    def test_logout_without_token(self):
+        """
+        Testa o logout sem passar token
+        """
+        response = self.client.post('/logout/')
+        self.assertEqual(response.status_code, 401)  # Unauthorized
+        self.assertContains(response, 'Token is missing or invalid')
+
+    def test_token_refresh(self):
+        """
+        Testa o refresh de token com um token válido
+        """
+        self.client.login(email='testuser@teste.com', password='testpass')
+        response = self.client.post('/refresh_token/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'token refreshed')
+
+    def test_token_refresh_invalid(self):
+        """
+        Testa o refresh de token com um token inválido
+        """
+        response = self.client.post('/refresh_token/', {
+            'token': 'invalidtoken'
+        })
+        self.assertEqual(response.status_code, 401)  # Unauthorized
+        self.assertContains(response, 'Invalid token')
+
+    def test_authenticate_valid_user(self):
+        """
+        Testa o login com credenciais válidas
+        """
+        response = self.client.post('/login/', {
+            'email': 'testuser@teste.com',
+            'password': 'testpass'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'login successful')
+
+    def test_authenticate_invalid_user(self):
+        """
+        Testa o login com credenciais inválidas
+        """
+        response = self.client.post('/login/', {
+            'email': 'invaliduser@teste.com',
+            'password': 'wrongpass'
+        })
         self.assertEqual(response.status_code, 400)
-
-    def test_update_project_with_invalid_data(self):
-        """
-        Tests the update project endpoint with invalid data.
-
-        This method sends a PUT request to the update project endpoint with invalid data and checks the response.
-        """
-        data = {
-            "project_name": "",
-            "project_description": "Updated Description",
-            "members": [self.user.email],
-            "owner": "invalid_owner_id"
-        }
-        response = self.client.put(f'/projects/{self.project.id}/', data=data, format='json')
-        
-        self.assertEqual(response.status_code, 400)
-
-    def tearDown(self):
-        """
-        Cleans up the test environment after each test method has run.
-
-        This method logs out the test client.
-        """
-        self.client.logout()
+        self.assertContains(response, 'Invalid credentials')
