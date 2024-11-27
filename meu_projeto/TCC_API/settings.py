@@ -100,7 +100,7 @@ DATABASES = {
         'NAME': 'tcc_database_39u8',
         'USER': 'tcc_user',
         'PASSWORD': 'REq5qKekqZ12HVaPbvp3M6optOCMQ47T',
-        'HOST': 'dpg-ct3l1g23esus73f8qlvg-a',
+        'HOST': 'dpg-ct3l1g23esus73f8qlvg-a.ohio-postgres.render.com',
         'PORT': '5432',
     }
 }
