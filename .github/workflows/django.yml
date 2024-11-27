@@ -58,5 +58,5 @@ jobs:
           -e DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
           -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
           -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          --name wisetime \
+          --name gdif \
           ${{ secrets.DOCKER_USERNAME }}/gdif:latest
