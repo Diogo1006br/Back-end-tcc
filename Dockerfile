@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8000
 
 # Definimos o comando para iniciar a aplicação
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "meu_projeto/manage.py", "runserver", "0.0.0.0:8000"]
