@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SITE_URL = 'http://localhost:8000'
+SITE_URL = 'https://gdif.site'
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -174,11 +174,13 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',  # Substitua por seus próprios domínios
     'http://127.0.0.1:8000',
     'http://127.0.0.1:3000',
+    'https://gdif.site',
     'exp://192.168.0.139:8081',
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://gdif.site",
     'exp://192.168.0.139:8081',
 ]
 CORS_ALLOW_METHODS = [
