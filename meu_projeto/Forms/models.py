@@ -19,15 +19,16 @@ class Form(models.Model):
     :rtype: str
     """
     name = models.CharField(max_length=255, default='formulario default')
-    form = models.JSONField()
+    form = models.JSONField(null=True, blank=True)  # Permite valores nulos e em branco
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     company = models.ForeignKey('Accounts.Company_DBTable', on_delete=models.CASCADE)
     choices = (
-        ('Arquivado','Arquivado'),
-        ('Ativo','Ativo'),
+        ('Arquivado', 'Arquivado'),
+        ('Ativo', 'Ativo'),
     )
-    status = models.CharField('Status',max_length=100,choices=choices,default='Ativo')
+    status = models.CharField('Status', max_length=100, choices=choices, default='Ativo')
+
     def __str__(self):
         return self.name
 

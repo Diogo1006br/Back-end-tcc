@@ -151,7 +151,7 @@ class Company_DBTable(Base):
     telephone = models.BigIntegerField('Telefone', blank=True, null=True)
     logotipo = models.ImageField('Logotipo', upload_to='empresas/logos', blank=True, null=True)
 
-    users = models.ManyToManyField(CustomUser_DBTable, blank=True, null=True)
+    users = models.ManyToManyField(CustomUser_DBTable, blank=True)
     plan = models.ForeignKey('Plans_DBTable', blank=True, on_delete=models.CASCADE, null=True)
 
     site = models.CharField('Site', blank=True, null=True)
