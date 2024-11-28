@@ -3,6 +3,9 @@ from Accounts.models import CustomUser_DBTable, Company_DBTable
 from Registrations.models import Asset_DBTable, SubItem_DBTable
 from Projects.models import Project_DBTable
 from Forms.models import Form
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TCC_API.settings')
 
 
 class RegistrationTests(TestCase):

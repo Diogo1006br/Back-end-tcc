@@ -4,7 +4,9 @@ from django.urls import reverse
 from Accounts.models import CustomUser_DBTable, Company_DBTable
 from Projects.models import Project_DBTable
 from datetime import datetime, timedelta
+import os
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TCC_API.settings')
 
 class ProjectAPITestCase(APITestCase):
     def setUp(self):
