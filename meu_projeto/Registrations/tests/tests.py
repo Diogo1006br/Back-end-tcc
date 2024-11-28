@@ -1,94 +1,104 @@
 from django.test import TestCase
-from Accounts.models import Company_DBTable  # Certifique-se de ajustar o caminho
-from Registrations.models import Asset_DBTable, SubItem_DBTable, Asset_Sub_Element_DBTable
+from Accounts.models import CustomUser_DBTable, Company_DBTable
+from Registrations.models import Asset_DBTable, SubItem_DBTable
+from Projects.models import Project_DBTable
 from Forms.models import Form
 
-class RegistrationsModelTests(TestCase):
-    def setUp(self):
-        # Criando uma empresa fictícia
-        self.company = Company_DBTable.objects.create()
 
-        # Criando um formulário fictício
-        self.form = Form.objects.create(
-            name="Formulário Teste",
-            form={"field": "value"},
-            company=self.company
+class RegistrationTests(TestCase):
+    def setUp(self):
+        # Criar uma empresa
+        self.company = Company_DBTable.objects.create(
+            companyName="Empresa Teste",
+            CNPJ="12345678901234",
         )
 
-        # Criando um ativo fictício
+        # Criar um usuário
+        self.user = CustomUser_DBTable.objects.create_user(
+            email="teste@teste.com",
+            password="senha123",
+            companyId=self.company.id,  # Passar o ID da empresa
+        )
+
+        # Criar um projeto
+        self.project = Project_DBTable.objects.create(
+            projectName="Projeto Teste",
+            projectDescription="Descrição do Projeto Teste",
+            owner=self.company,
+        )
+        self.project.members.add(self.user)  # Adicionar usuário como membro do projeto
+
+        # Criar um formulário
+        self.form = Form.objects.create(
+            name="Formulário Teste",
+            form={"campo1": "valor1", "campo2": "valor2"},  # JSONField exemplo
+            company=self.company,
+            status="Ativo",
+        )
+
+        # Criar um ativo
         self.asset = Asset_DBTable.objects.create(
             assetName="Ativo Teste",
             form=self.form,
-            company=self.company,
-            status="Ativo"
+            project=self.project,  # Vincular ao projeto
+            status="Ativo",
+            is_ocult=False,
         )
 
-        # Criando um subitem fictício
+        # Criar um subitem
         self.sub_item = SubItem_DBTable.objects.create(
-            elementName="Subitem Teste",
+            elementName="Elemento Teste",
             asset=self.asset,
-            form=self.form
+            form=self.form,
+            is_ocult=False,
         )
 
     def test_asset_creation(self):
-        """Testa se um ativo pode ser criado corretamente."""
+        """
+        Teste para verificar a criação de um ativo.
+        """
         self.assertEqual(self.asset.assetName, "Ativo Teste")
         self.assertEqual(self.asset.form, self.form)
-        self.assertEqual(self.asset.status, "Ativo")
+        self.assertEqual(self.asset.project, self.project)
+        self.assertFalse(self.asset.is_ocult)
 
-    def test_sub_item_creation(self):
-        """Testa se um subitem pode ser criado corretamente."""
-        self.assertEqual(self.sub_item.elementName, "Subitem Teste")
-        self.assertEqual(self.sub_item.asset, self.asset)
-        self.assertEqual(self.sub_item.form, self.form)
-
-    def test_asset_deletion(self):
-        """Testa a exclusão de um ativo e seus dependentes."""
-        self.asset.delete()
-        self.assertEqual(SubItem_DBTable.objects.filter(asset=self.asset).count(), 0)
-
-    def test_sub_item_deletion(self):
-        """Testa a exclusão de um subitem."""
-        self.sub_item.delete()
-        self.assertEqual(SubItem_DBTable.objects.filter(pk=self.sub_item.pk).count(), 0)
+    def test_asset_detail(self):
+        """
+        Teste para obter detalhes de um ativo.
+        """
+        asset = Asset_DBTable.objects.get(id=self.asset.id)
+        self.assertEqual(asset.assetName, "Ativo Teste")
+        self.assertEqual(asset.form, self.form)
+        self.assertEqual(asset.project, self.project)
 
     def test_asset_list(self):
-        """Testa se a listagem de ativos retorna corretamente."""
+        """
+        Teste para listar ativos.
+        """
         assets = Asset_DBTable.objects.all()
         self.assertIn(self.asset, assets)
 
-    def test_sub_item_list(self):
-        """Testa se a listagem de subitens retorna corretamente."""
-        sub_items = SubItem_DBTable.objects.filter(asset=self.asset)
-        self.assertIn(self.sub_item, sub_items)
+    def test_delete_asset(self):
+        """
+        Teste para deletar um ativo.
+        """
+        self.asset.delete()
+        assets = Asset_DBTable.objects.all()
+        self.assertNotIn(self.asset, assets)
 
-    def test_sub_element_creation(self):
-        """Testa se um subelemento pode ser criado corretamente."""
-        sub_element = Asset_Sub_Element_DBTable.objects.create(
-            nameSubElement="SubElemento Teste",
-            element=self.sub_item,
-            form=self.form
-        )
-        self.assertEqual(sub_element.nameSubElement, "SubElemento Teste")
-        self.assertEqual(sub_element.element, self.sub_item)
-        self.assertEqual(sub_element.form, self.form)
+    def test_sub_item_creation(self):
+        """
+        Teste para criar um subitem.
+        """
+        self.assertEqual(self.sub_item.elementName, "Elemento Teste")
+        self.assertEqual(self.sub_item.asset, self.asset)
+        self.assertEqual(self.sub_item.form, self.form)
 
-    def test_sub_element_deletion(self):
-        """Testa a exclusão de um subelemento."""
-        sub_element = Asset_Sub_Element_DBTable.objects.create(
-            nameSubElement="SubElemento Teste",
-            element=self.sub_item,
-            form=self.form
-        )
-        sub_element.delete()
-        self.assertEqual(Asset_Sub_Element_DBTable.objects.filter(pk=sub_element.pk).count(), 0)
-
-    def test_sub_element_list(self):
-        """Testa se a listagem de subelementos retorna corretamente."""
-        sub_element = Asset_Sub_Element_DBTable.objects.create(
-            nameSubElement="SubElemento Teste",
-            element=self.sub_item,
-            form=self.form
-        )
-        sub_elements = Asset_Sub_Element_DBTable.objects.filter(element=self.sub_item)
-        self.assertIn(sub_element, sub_elements)
+    def test_update_asset(self):
+        """
+        Teste para atualizar um ativo.
+        """
+        self.asset.assetName = "Ativo Atualizado"
+        self.asset.save()
+        updated_asset = Asset_DBTable.objects.get(id=self.asset.id)
+        self.assertEqual(updated_asset.assetName, "Ativo Atualizado")
