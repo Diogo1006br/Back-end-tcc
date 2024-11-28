@@ -16,6 +16,8 @@ jobs:
       # Etapa 1: Clonar o repositório
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Necessário para relevância de análise no SonarCloud
 
       # Etapa 2: Configurar o Python
       - name: Set up Python
@@ -41,6 +43,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
@@ -48,3 +51,7 @@ jobs:
             -Dsonar.organization=diogo1006br
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sources=meu_projeto
+            -Dsonar.exclusions=**/migrations/**,**/__pycache__/**
+            -Dsonar.tests=meu_projeto
+            -Dsonar.test.inclusions=**/tests.py
