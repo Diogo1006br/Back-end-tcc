@@ -37,14 +37,9 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/meu_projeto
         run: |
-          pytest --cov=meu_projeto --cov-report xml:coverage.xml
+          pytest --reuse-db --cov=meu_projeto --cov-report xml:coverage.xml
 
-      # Etapa 5: Verificar se o arquivo de cobertura foi gerado
-      - name: Verify coverage report
-        run: |
-          ls -l coverage.xml
-
-      # Etapa 6: Configurar o SonarCloud e rodar a análise
+      # Etapa 5: Configurar o SonarCloud e rodar a análise
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
