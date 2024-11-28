@@ -1,6 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from Accounts.models import Company_DBTable, CustomUser_DBTable
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TCC_API.settings')
 
 
 class UserModelTest(TestCase):

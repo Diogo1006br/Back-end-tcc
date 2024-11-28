@@ -2,6 +2,9 @@ from django.test import TestCase, RequestFactory, override_settings
 from MiddleWare.TokenMiddleware import CookieTokenMiddleware
 from django.http import HttpResponse
 from django.urls import path
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TCC_API.settings')
 
 # URLs simuladas para o teste
 urlpatterns = [

@@ -3,6 +3,9 @@ from Forms.models import Form, FormResponse, DropboxAnswerList
 from Accounts.models import Company_DBTable, CustomUser_DBTable
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TCC_API.settings')
 
 class FormsTestCase(TestCase):
     def setUp(self):
