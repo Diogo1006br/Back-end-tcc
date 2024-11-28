@@ -21,6 +21,7 @@ from Forms.views import FormNumberView, ChangeFormStatus, ResponsesByProject
 from Registrations.views import AssetNumbersView, AssetChangeStatus
 from Projects.views import ProjectNumberView, RecentProjectsView, ChangeProjectStatus
 
+
 # Configuração do roteador para os viewsets
 router = routers.DefaultRouter()
 router.register('assets', AssetDBTableViewSet, basename='asset')
