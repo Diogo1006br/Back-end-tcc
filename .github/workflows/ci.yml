@@ -33,8 +33,7 @@ jobs:
     # Etapa 4: Configurar o PYTHONPATH e rodar os testes
     - name: Run tests and generate coverage
       env:
-        PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/meu_projeto
-        DJANGO_SETTINGS_MODULE: TCC_API.settings
+        PYTHONPATH: ${{ github.workspace }}/meu_projeto
       run: |
         pytest --cov=meu_projeto --cov-report xml:coverage.xml
 
@@ -48,8 +47,4 @@ jobs:
           -Dsonar.projectKey=Back-end-tcc
           -Dsonar.organization=Diogo
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.sources=meu_projeto
           -Dsonar.python.coverage.reportPaths=coverage.xml
-          -Dsonar.exclusions=**/migrations/**,**/__pycache__/**
-          -Dsonar.tests=meu_projeto
-          -Dsonar.test.inclusions=**/tests.py
