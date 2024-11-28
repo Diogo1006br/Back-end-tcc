@@ -31,13 +31,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    '10.0.2.2',
-    '127.0.0.1',
-    'localhost',
-    'gdif.site',
-    'www.gdif.site',
-]
+ALLOWED_HOSTS = ['10.0.2.2',
+                 '127.0.0.1',
+                 'localhost',
+                 'gdif.site',
+                 'www.gdif.site']
 
 
 # Application definition
@@ -201,10 +199,6 @@ CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = 'None' # ou 'Strict' ou 'None'
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
-
-
-CSRF_COOKIE_SECURE = True     
-SECURE_SSL_REDIRECT = True
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
