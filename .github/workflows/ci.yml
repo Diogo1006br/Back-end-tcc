@@ -32,14 +32,24 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-django pytest-cov
 
-      # Etapa 4: Configurar o PYTHONPATH e rodar os testes
+      # Etapa 4: Configurar o PYTHONPATH e rodar os testes com cobertura
       - name: Run tests and generate coverage
         env:
           PYTHONPATH: ${{ github.workspace }}/meu_projeto
         run: |
-          pytest --reuse-db --cov=meu_projeto --cov-report xml:coverage.xml
+          pytest
 
-      # Etapa 5: Configurar o SonarCloud e rodar a análise
+      # Etapa 5: Verificar se o arquivo coverage.xml foi gerado
+      - name: Check coverage.xml
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "coverage.xml found"
+          else
+            echo "coverage.xml not found"
+            exit 1
+          fi
+
+      # Etapa 6: Configurar o SonarCloud e rodar a análise
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
@@ -52,6 +62,6 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=meu_projeto
-            -Dsonar.exclusions=**/migrations/**,**/__pycache__/**
+            -Dsonar.exclusions=**/migrations/**,**/__pycache__/**,**/venv/**
             -Dsonar.tests=meu_projeto
             -Dsonar.test.inclusions=**/tests.py
