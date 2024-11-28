@@ -30,7 +30,7 @@ jobs:
       # Execução de testes unitários com cobertura
       - name: Run unit tests
         run: |
-          pytest --cov=. --cov-report=xml
+          pytest
 
       # Scan do SonarQube
       - name: SonarQube Cloud Scan
