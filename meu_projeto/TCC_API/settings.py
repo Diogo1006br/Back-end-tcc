@@ -31,11 +31,13 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.0.2.2',
-                 '127.0.0.1',
-                 'localhost',
-                 'gdif.site',
-                 'www.gdif.site']
+ALLOWED_HOSTS = [
+    '10.0.2.2',
+    '127.0.0.1',
+    'localhost',
+    'gdif.site',
+    'www.gdif.site',
+]
 
 
 # Application definition
@@ -182,7 +184,7 @@ CORS_ORIGIN_WHITELIST = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://gdif.site",
+    "https://gdif.site",
     'exp://192.168.0.139:8081',
 ]
 CORS_ALLOW_METHODS = [
