@@ -13,38 +13,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Etapa 1: Clonar o repositório
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Etapa 1: Clonar o repositório
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Etapa 2: Configurar o Python
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      # Etapa 2: Configurar o Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    # Etapa 3: Instalar dependências
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-django pytest-cov
+      # Etapa 3: Instalar dependências
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django pytest-cov
 
-    # Etapa 4: Configurar o PYTHONPATH e rodar os testes
-    - name: Run tests and generate coverage
-      env:
-        PYTHONPATH: ${{ github.workspace }}/meu_projeto
-      run: |
-        pytest --cov=meu_projeto --cov-report xml:coverage.xml
+      # Etapa 4: Configurar o PYTHONPATH e rodar os testes
+      - name: Run tests and generate coverage
+        env:
+          PYTHONPATH: ${{ github.workspace }}/meu_projeto
+        run: |
+          pytest --cov=meu_projeto --cov-report xml:coverage.xml
 
-    # Etapa 5: Configurar o SonarCloud e rodar a análise
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@v2
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=Back-end-tcc
-          -Dsonar.organization=Diogo
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.python.coverage.reportPaths=coverage.xml
+      # Etapa 5: Configurar o SonarCloud e rodar a análise
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=Diogo1006br_Back-end-tcc
+            -Dsonar.organization=diogo1006br
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.python.coverage.reportPaths=coverage.xml
