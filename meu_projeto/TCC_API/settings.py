@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SITE_URL = 'http://localhost:8080'
+SITE_URL = 'https://gdif.site'
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
