@@ -28,18 +28,11 @@ class UserSerializerNoPassword(serializers.ModelSerializer):
     """
     Serializer for the CustomUser_DBTable model.
     """
-    email = serializers.EmailField(required=True, allow_blank=False)
-    firstName = serializers.CharField(required=True, allow_blank=False)
-    lastName = serializers.CharField(required=True, allow_blank=False)
-    birthDate = serializers.DateField(format='%Y-%m-%d', input_formats=['%Y-%m-%d',])
-    CPF = serializers.CharField(required=True, allow_blank=False)
-    phone = serializers.CharField(required=True, allow_blank=False)
-    companyPosition = serializers.CharField(required=True, allow_blank=False)
     profileImage = serializers.ImageField(required=False)
 
     class Meta:
         model = CustomUser_DBTable
-        fields = ['email', 'firstName', 'lastName', 'birthDate','CPF','phone','companyPosition','profileImage']
+        fields = ['profileImage']
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField()

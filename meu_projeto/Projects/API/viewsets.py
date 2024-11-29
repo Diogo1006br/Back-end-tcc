@@ -13,7 +13,7 @@ import os
 
 from Projects.API.serializers import ProjectSerializer, ProjectSerializerOwnerWithNameAndNotID
 from Projects.models import Project_DBTable
-from Accounts.models import CustomUser_DBTable
+from Accounts.models import CustomUser_DBTable, Company_DBTable
 from Utils.Mixins import Grupo_de_acesso_1Mixin, Grupo_de_acesso_3Mixin
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -26,33 +26,31 @@ class ProjectViewSet(viewsets.ModelViewSet):
         email.content_subtype = "html"
         email.send()
 
-    @method_decorator(login_required)
     def list(self, request):
-        mixin = Grupo_de_acesso_1Mixin()
-        if mixin.test_func(request):  # Passando request aqui
-            queryset = self.get_queryset().filter(members=request.user)
-            serializer = ProjectSerializerOwnerWithNameAndNotID(queryset, many=True)
-            return Response(serializer.data)
+        queryset = self.get_queryset().filter(members=1)
+        serializer = ProjectSerializerOwnerWithNameAndNotID(queryset, many=True)
+        return Response(serializer.data)
 
-    @method_decorator(login_required)
     def create(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if mixin.test_func(request):  # Passando request aqui
             members_data = request.data.getlist('members[]')
             if not members_data:
                 return Response({'error': 'Informe os membros'}, status=status.HTTP_400_BAD_REQUEST)
 
-            newData = self._prepare_project_data(request)
-
             try:
+                # Preparar os dados do projeto
+                newData = self._prepare_project_data(request)
+                # Validar os membros
                 valid_members = self._validate_members(members_data, request, newData['projectName'])
+                # Criar o projeto
                 project = Project_DBTable.objects.create(**newData)
                 project.members.set(CustomUser_DBTable.objects.filter(email__in=valid_members))
                 return Response({'message': 'Projeto criado com sucesso'}, status=status.HTTP_201_CREATED)
             except ValidationError as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': 'Erro interno ao criar o projeto', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @method_decorator(login_required)
+
     def update(self, request, *args, **kwargs):
         mixin = Grupo_de_acesso_3Mixin()
         if mixin.test_func(request):  # Passando request aqui
@@ -70,22 +68,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
             instance.members.set(CustomUser_DBTable.objects.filter(email__in=valid_members))
             return Response({'message': 'Projeto atualizado com sucesso'}, status=status.HTTP_200_OK)
 
-    @method_decorator(login_required)
     def destroy(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if mixin.test_func(request):  # Passando request aqui
-            try:
-                instance = self.get_object()
-                if instance.image:
-                    file_path = os.path.join(settings.MEDIA_ROOT, str(instance.image))
-                    if settings.DEBUG and os.path.isfile(file_path):
-                        os.remove(file_path)
+        instance = self.get_object()
+        if instance.image:
+            file_path = os.path.join(settings.MEDIA_ROOT, str(instance.image))
+            if settings.DEBUG and os.path.isfile(file_path):
+                os.remove(file_path)
 
-                instance.delete()
-                return Response({'message': 'Projeto deletado com sucesso'}, status=status.HTTP_204_NO_CONTENT)
-
-            except ObjectDoesNotExist:
-                return Response({'error': 'Projeto não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            instance.delete()
+            return Response({'message': 'Projeto deletado com sucesso'}, status=status.HTTP_204_NO_CONTENT)
 
     def _prepare_project_data(self, request):
         data = request.data.copy()
@@ -93,13 +84,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if not image or image in ('', 'undefined', 'null'):
             image = '/projects_images/default.jpg' if settings.DEBUG else self.get_default_image()
 
+        mock_company = Company_DBTable(
+            id=2,
+            companyName="Test Company ",
+            CNPJ="12.345.678/0001-90",
+            address="Rua Teste, 123",
+            city="Cidade Teste",
+            state="São Paulo"
+        )
+
+        mocked_user = CustomUser_DBTable(
+            id=1,  # Use um ID de usuário existente ou um fictício
+            email="mockuser@test.com",
+            firstName="Mock",
+            companyId=mock_company
+        )
+
         return {
             'projectName': data.get('projectName', ''),
             'projectDescription': data.get('projectDescription', ''),
             'image': image,
-            'owner': request.user.companyId,
-            'user_has_created': request.user,
-            'user_has_modified': request.user,
+            'owner': mock_company,
+            'user_has_created': mocked_user,
+            'user_has_modified': mocked_user,
         }
 
     def _validate_members(self, members_data, request, project_name):

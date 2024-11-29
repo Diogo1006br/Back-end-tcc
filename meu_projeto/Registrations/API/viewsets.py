@@ -45,9 +45,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         :The data that return is the comment that have the comment 'Comentário 1'
 
         """
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         comment = request.data.get('comment')
         content_type = request.data.get('content_type')
         if content_type == 'Asset':
@@ -83,9 +81,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         :The data that return is the comment that have the questionKey 'questionkey'
 
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         params = request.query_params
         if 'content_type' and 'object_id' in params:
             contentType = params.get('content_type')
@@ -122,7 +118,7 @@ class ActionPerItemViewSet(viewsets.ModelViewSet):
     queryset = Action_DBTable.objects.all()
     serializer_class = ActionDBTableSerializer
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         List all action instances.
@@ -142,9 +138,7 @@ class ActionPerItemViewSet(viewsets.ModelViewSet):
 
         """
         
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         request_user = request.user
         request_user = self.request.user
         object_id = request.query_params.get('object_id')
@@ -182,7 +176,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     queryset = Action_DBTable.objects.all()
     serializer_class = ActionDBTableSerializer
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         List all action instances.
@@ -202,9 +196,7 @@ class ActionViewSet(viewsets.ModelViewSet):
 
         """
         
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         request_user = request.user
         request_user = self.request.user
         queryset = super().get_queryset().filter(
@@ -212,7 +204,7 @@ class ActionViewSet(viewsets.ModelViewSet):
         )
         serializer = self.get_serializer(queryset, many=True)        
         return Response(serializer.data)
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
         """
         Create a new action instance.
@@ -230,9 +222,7 @@ class ActionViewSet(viewsets.ModelViewSet):
         :use api.post('/api/action/', {title: 'Ação 1', content_type: 'Asset', object_id: 1, priority: 'Baixa', deadline: '2021-12-31', responsible: 1})
         :The data that return is the action that have the title 'Ação 1'
         """
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         title = request.data.get('title')
         content_type = request.data.get('content_type')
         if content_type == 'Asset':
@@ -312,7 +302,7 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
     """
     queryset = Asset_DBTable.objects.all()
     serializer_class = AssetDBTableSerializer
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         List all Asset_DBTable instances.
@@ -341,27 +331,18 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
         """
         
         # Usando request.query_params em vez de request.data
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
         params = request.query_params
 
         if 'project' in params:
             projeto = params.get('project')
                 
-            OBJproject = Project_DBTable.objects.filter(pk=projeto).first()
-            if OBJproject and OBJproject.owner == request.user.companyId:
-                queryset = self.get_queryset().filter(project=projeto)
-                for query in queryset:
-                    if query.is_ocult == True:
-                        if request.user not in query.show_to.all():
-                            queryset = queryset.exclude(pk=query.pk)
-                serializer = AssetDBTableSerializerwithformname(queryset, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-                
-            else:
-                # Se o projeto não existir ou o usuário não tiver permissão
-                return Response({'message': 'Você não tem permissão para acessar esse projeto'}, status=status.HTTP_401_UNAUTHORIZED)
+            queryset = self.get_queryset().filter(project=projeto)
+            for query in queryset:
+                if query.is_ocult == True:
+                    if request.user not in query.show_to.all():
+                        queryset = queryset.exclude(pk=query.pk)
+            serializer = AssetDBTableSerializerwithformname(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             user = request.user
             projects = Project_DBTable.objects.filter(members=user)
@@ -371,7 +352,7 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
 
         
         
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
         """
         Create a new Asset_DBTable instance.
@@ -397,9 +378,6 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
         :    "status": "Ativo"
         :}
         """
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
         data = request.data
         is_ocult = data.get('is_ocult') == 'true'
 
@@ -423,7 +401,7 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'status': 'Asset not created', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-    @method_decorator(login_required)
+    
     def destroy(self, request, *args, **kwargs):
         """
         Delete a Asset_DBTable instance.
@@ -449,9 +427,6 @@ class AssetDBTableViewSet(viewsets.ModelViewSet):
         :    "status": "Ativo"
         :}
         """
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return Response(status=status.HTTP_403_FORBIDDEN)
         instance = self.get_object()
         subItems = SubItem_DBTable.objects.filter(ativo=instance.id)
         try:
@@ -474,7 +449,7 @@ class SubItemDBTableViewSet(viewsets.ModelViewSet):
     """
     queryset = SubItem_DBTable.objects.all()
     serializer_class = SubItemDBTableSerializer
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         List all Asset_Element_DBTable instances.
@@ -499,9 +474,6 @@ class SubItemDBTableViewSet(viewsets.ModelViewSet):
         :    "form": 1
         :}
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
         user = request.user
         projetos = Project_DBTable.objects.filter(members=user)
         assets =  Asset_DBTable.objects.filter(project__in=projetos)
@@ -522,15 +494,11 @@ class SubItemperAssetViewSet(viewsets.ModelViewSet):
     queryset = SubItem_DBTable.objects.all()
     serializer_class = SubItemDBTableSerializer
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         Lista todos os elementos associados a um ativo específico.
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-
         params = request.query_params
         asset = params.get('Asset')
 
@@ -591,7 +559,7 @@ class imagesViewSet(viewsets.ModelViewSet):
     serializer_class = imagesSerializer
 
     #define embed questionKey
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
         """
         List all images instances.
@@ -618,9 +586,6 @@ class imagesViewSet(viewsets.ModelViewSet):
         :    "questionKey": "questionkey"
         :}
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
         params = request.query_params
         if 'questionkey' in params:
             key = params.get('questionkey')
@@ -640,7 +605,7 @@ class imagesViewSet(viewsets.ModelViewSet):
         else:
             return Response({'message': 'Chave de pergunta não informada, informe a chave'}, status=status.HTTP_400_BAD_REQUEST)
         
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
         """
         Create a new image instance.
@@ -659,9 +624,7 @@ class imagesViewSet(viewsets.ModelViewSet):
         :The data that return is the image that have the questionkey
 
         """
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         questionKey = request.data.get('questionKey')
         content_type = request.data.get('response_type')
         if content_type == 'Asset':

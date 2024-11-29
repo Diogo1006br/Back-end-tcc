@@ -11,7 +11,7 @@ from rest_framework import status
 
 # Create your views here.
 class AssetNumbersView(APIView):
-    @method_decorator(login_required)
+    
     def get(self, request,*args, **kwargs):
         """
         Retrieves the number of assets in system
@@ -24,18 +24,12 @@ class AssetNumbersView(APIView):
         :Request: GET api url/asset_numbers/<int:project>/
         
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         project = kwargs.get('project')
-        owner = Project_DBTable.objects.get(id=project).owner
-        if owner != request.user.companyId:
-            return Response({'asset_numbers': 'You do not have permission to view this project assets'}, status=401)
-        else:
-            return Response({'asset_numbers': Asset_DBTable.objects.filter(project=project).count()})
+        return Response({'asset_numbers': Asset_DBTable.objects.filter(project=project).count()})
 
 class AssetChangeStatus(APIView):
-    @method_decorator(login_required)
+    
     def post(self, request, *args, **kwargs):
         """
         Changes the status of a asset

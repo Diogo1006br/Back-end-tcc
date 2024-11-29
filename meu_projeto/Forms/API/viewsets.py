@@ -19,14 +19,10 @@ class FormsViewSet(viewsets.ModelViewSet):
     queryset = Form.objects.all()
     serializer_class = FormSerializer
 
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
-        company = request.user.companyId
-        data = {'name': request.data['name'], 'form': request.data, 'company': company.id}
+        company = 1
+        data = {'name': request.data['name'], 'form': request.data, 'company': company}
         
         serializer = self.get_serializer(data=data)
         try:
@@ -37,34 +33,23 @@ class FormsViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
-        company = request.user.companyId
-        forms = Form.objects.filter(company=company.id)
+        forms = Form.objects.filter(company=1)
         serializer = self.get_serializer(forms, many=True)
         
         return Response(serializer.data)
 
-    @method_decorator(login_required)
+    
     def retrieve(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    @method_decorator(login_required)
+    
     def update(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         instance = self.get_object()
         data = {'name': request.data['name'], 'form': request.data, 'company': instance.company.id}
         
@@ -77,12 +62,8 @@ class FormsViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-    @method_decorator(login_required)
+    
     def destroy(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         id = self.get_object().id
         asset = Asset_DBTable.objects.filter(form=id).exists()
         subitem = SubItem_DBTable.objects.filter(form=id).exists()
@@ -98,12 +79,8 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
     queryset = FormResponse.objects.all()
     serializer_class = Form_ResponseSerializer
 
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         data = request.data
 
         # Iterar sobre os campos da resposta e tratar os valores adequadamente
@@ -158,13 +135,11 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status_code)
 
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         
-        company = request.user.companyId
+        company = 1
         params = request.query_params
         
         if 'formID' in params and 'Asset' in params and 'content_type' in params:
@@ -183,9 +158,6 @@ class Form_ResponseViewSet(viewsets.ModelViewSet):
             if not responses.exists():
                 return Response({'message': 'No responses found'}, status=status.HTTP_404_NOT_FOUND)
             
-            if responses.first().formID.company != company:
-                return Response('You do not have permission to view this form response', status=status.HTTP_403_FORBIDDEN)
-            
             serializer = Form_ResponseSerializer(responses, many=True)
             return Response(serializer.data)
         
@@ -196,12 +168,8 @@ class DropBoxAnswerListViewSet(viewsets.ModelViewSet):
     queryset = DropboxAnswerList.objects.all()
     serializer_class = DropboxAnswerListSerializer
 
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         newData = {
             'name': request.data['name'],
             'list': request.data['list'],
@@ -217,12 +185,8 @@ class DropBoxAnswerListViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @method_decorator(login_required)
+    
     def update(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         instance = self.get_object()
         newData = {
             'name': request.data['name'],
@@ -239,11 +203,9 @@ class DropBoxAnswerListViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @method_decorator(login_required)
+    
     def list(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
+
         
         company = request.user.companyId
         lists = DropboxAnswerList.objects.filter(company=company.id)
@@ -251,12 +213,8 @@ class DropBoxAnswerListViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.data)
 
-    @method_decorator(login_required)
+    
     def destroy(self, request, *args, **kwargs):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({'detail': 'Deleted successfully'}, status=status.HTTP_200_OK)

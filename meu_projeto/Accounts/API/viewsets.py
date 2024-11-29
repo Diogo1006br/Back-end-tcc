@@ -14,7 +14,7 @@ from Accounts.API.serializers import UserSerializerNoPassword
 
 
 class PasswordViewSet(viewsets.ViewSet):
-    @method_decorator(login_required)
+    
     def update(self, request, pk=None):
         user = request.user
         serializer = serializers.passwordSerializer(user, data=request.data, partial=True)
@@ -30,18 +30,14 @@ class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CompanySerializer
     queryset = Company_DBTable.objects.all()
 
-    @method_decorator(login_required)
+    
     def list(self, request):
         company = request.user.companyId
         serializer = serializers.CompanySerializer(company)
         return Response(serializer.data)
 
-    @method_decorator(login_required)
+    
     def update(self, request, pk=None):
-        mixin = Grupo_de_acesso_3Mixin()
-        if not mixin.test_func(request):
-            return mixin.handle_no_permission()
-        
         data = request.data.copy()
         files = request.FILES
         data['logotipo'] = files.get('logotipo', None)
@@ -93,7 +89,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserSerializer
     queryset = CustomUser_DBTable.objects.all()
 
-    @method_decorator(login_required)
+    
     def create(self, request, *args, **kwargs):
         userGroup = request.user.groups.all()[0].name
         if 'Gestor da empresa' in userGroup or 'Admins' in userGroup:
@@ -106,7 +102,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class ReturnLogedUser(viewsets.ViewSet):
-    @method_decorator(login_required)
+    
     def list(self, request):
         user = request.user
         user_dict = {
@@ -127,7 +123,7 @@ class ReturnLogedUser(viewsets.ViewSet):
         
         return Response(user_dict)
 
-    @method_decorator(login_required)
+    
     def update(self, request, pk=None):
         user = request.user
         serializer = UserSerializerNoPassword(user, data=request.data, partial=True)

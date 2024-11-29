@@ -12,12 +12,6 @@ class BaseGroupRequiredMixin:
         user_groups = [group.name for group in request.user.groups.all()]
         return any(group in self.allowed_groups for group in user_groups)
 
-    def handle_no_permission(self):
-        """
-        Manipula o caso onde o usuário não possui permissão.
-        """
-        return Response({'message': 'Você não tem permissão para acessar essa página.'}, status=status.HTTP_403_FORBIDDEN)
-
 class AdminRequiredMixin(BaseGroupRequiredMixin):
     allowed_groups = ['Admins']
 

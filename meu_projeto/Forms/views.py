@@ -10,7 +10,7 @@ from Utils.Mixins import Grupo_de_acesso_3Mixin, Grupo_de_acesso_1Mixin, Grupo_d
 
 
 class FormNumberView(APIView):
-    @method_decorator(login_required)
+    
     def get(self, request):
         """
         Retrieves the number of forms in the system.
@@ -18,18 +18,12 @@ class FormNumberView(APIView):
         :param request: HTTP request object.
         :return: HTTP response with the number of forms in the system.
         """
-        mixin = Grupo_de_acesso_1Mixin()
-        if not mixin.test_func(request):
-            return Response(
-                {'message': 'Você não tem permissão para acessar essa página.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        form_count = Form.objects.filter(company=request.user.companyId.id).count()
+        form_count = Form.objects.filter(company=1).count()
         return Response({'form_numbers': form_count})
 
 
 class ChangeFormStatus(APIView):
-    @method_decorator(login_required)
+    
     def post(self, request, *args, **kwargs):
         """
         Changes the status of a form.
@@ -38,23 +32,15 @@ class ChangeFormStatus(APIView):
         :param kwargs: URL parameters, including form ID.
         :return: HTTP response with the updated status of the form.
         """
-        mixin = Grupo_de_acesso_2Mixin()
-        if not mixin.test_func(request):
-            return Response(status=status.HTTP_403_FORBIDDEN)
-
         form_id = kwargs.get('id')
         form = Form.objects.get(id=form_id)
-        if form.company.id != request.user.companyId.id:
-            return Response({'message': 'Você não tem permissão para alterar o status deste formulário.'},
-                            status=status.HTTP_403_FORBIDDEN)
-
         form.status = request.data.get('status')
         form.save()
         return Response({'status': form.status})
 
 
 class ResponsesByProject(APIView):
-    @method_decorator(login_required)
+    
     def get(self, request, *args, **kwargs):
         """
         Retrieves the responses associated with a project.
@@ -87,7 +73,7 @@ class ResponsesByProject(APIView):
 
 
 class DuplicateForm(APIView):
-    @method_decorator(login_required)
+    
     def post(self, request, *args, **kwargs):
         """
         Duplicates a form.
