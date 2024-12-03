@@ -192,6 +192,7 @@ CORS_ALLOW_METHODS = [
 ]
 
 
+
 #trocar os secure para True quando for para produção
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = 'None' # ou 'Strict' ou 'None'
