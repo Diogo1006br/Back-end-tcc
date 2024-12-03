@@ -12,3 +12,4 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "TCC_API.settings")
 # Inicializa o Django
 skip_if_no_django()
 django.setup()
+
