@@ -217,6 +217,14 @@ SERVER_EMAIL = os.getenv('SERVER_EMAIL')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+DATADOG_CONFIG = {
+    'AGENT_HOST': '3.135.191.26',
+    'ENV': 'development',
+    'SERVICE': 'django-app',
+    'VERSION': '1.0.0',
+}
+
+
 
 
 
