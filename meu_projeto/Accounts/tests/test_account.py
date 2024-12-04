@@ -1,5 +1,7 @@
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 from Accounts.models import Company_DBTable, CustomUser_DBTable
+
 
 class UserModelTest(TestCase):
     
@@ -16,10 +18,11 @@ class UserModelTest(TestCase):
     def test_create_user(self):
         """Testa a criação de um usuário"""
         user = CustomUser_DBTable.objects.create_user(
+            username="user",
             email="user@test.com",
             password="testpassword123",
             firstName="Test",
-            companyId=self.company.id  # Passando apenas o ID da empresa
+            companyId=self.company  # Passando o objeto da empresa
         )
 
         self.assertEqual(user.email, "user@test.com")
@@ -30,10 +33,11 @@ class UserModelTest(TestCase):
     def test_create_superuser(self):
         """Testa a criação de um superusuário"""
         superuser = CustomUser_DBTable.objects.create_superuser(
+            username="superuser",
             email="superuser@test.com",
             password="testpassword123",
             firstName="Admin",
-            companyId=self.company.id  # Passando apenas o ID da empresa
+            companyId=self.company  # Passando o objeto da empresa
         )
 
         self.assertEqual(superuser.email, "superuser@test.com")
@@ -45,6 +49,7 @@ class UserModelTest(TestCase):
         """Testa a criação de um usuário sem associar a empresa"""
         with self.assertRaises(TypeError):
             CustomUser_DBTable.objects.create_user(
+                username="user",
                 email="no_company@test.com",
                 password="testpassword123",
                 firstName="Test"
@@ -53,9 +58,10 @@ class UserModelTest(TestCase):
     def test_user_str_method(self):
         """Testa o método __str__ do usuário"""
         user = CustomUser_DBTable.objects.create_user(
+            username="user",
             email="user@test.com",
             password="testpassword123",
             firstName="Test",
-            companyId=self.company.id  # Passando o ID da empresa
+            companyId=self.company  # Passando o objeto da empresa
         )
         self.assertEqual(str(user), "user@test.com")

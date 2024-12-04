@@ -19,23 +19,20 @@ class Base(models.Model):
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, email, companyId, password, **extra_fields):
+    def _create_user(self, email, username, companyId, password, **extra_fields):
         if not email:
             raise ValueError('O email é obrigatório')
         email = self.normalize_email(email)
-        user = self.model(email=email, username=email, **extra_fields)
+        user = self.model(email=email, username=username, companyId=companyId, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
-        user.companyId = companyId
-        user.save()  # Salvando novamente para garantir que a empresa seja associada
         return user
 
-    def create_user(self, email, companyId, password=None, **extra_fields):
+    def create_user(self, email, username, companyId, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', False)
-        company_instance = Company_DBTable.objects.get(id=companyId)
-        return self._create_user(email, company_instance, password, **extra_fields)
+        return self._create_user(email, username, companyId, password, **extra_fields)
 
-    def create_superuser(self, email, companyId, password, **extra_fields):
+    def create_superuser(self, email, username, companyId, password, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
 
@@ -45,9 +42,7 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser precisa ter is_staff como True')
 
-        company_instance = Company_DBTable.objects.get(id=companyId)
-        return self._create_user(email=email, companyId=company_instance, password=password, **extra_fields)
-
+        return self._create_user(email, username, companyId, password, **extra_fields)
 
 # Modelo de Usuário Personalizado
 class CustomUser_DBTable(AbstractUser, PermissionsMixin):
@@ -92,7 +87,6 @@ class CustomUser_DBTable(AbstractUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-
 
 # Modelo de Planos
 class Plans_DBTable(Base):
