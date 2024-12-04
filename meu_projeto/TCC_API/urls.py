@@ -37,6 +37,7 @@ router.register('elementperasset', SubItemperAssetViewSet)
 router.register('password', PasswordViewSet, basename='password')
 router.register('comments', CommentViewSet)
 
+
 urlpatterns = [
     path('api/api-auth/', include('rest_framework.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
